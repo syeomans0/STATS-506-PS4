@@ -7,25 +7,59 @@ format:
 editor: visual
 ---
 
+## Tidyverse packages
+
+```{r}
+library(tidyverse)
+library(dplyr)
+
+```
+
 ## Problem 1
 
-Use the nzge data for this problem.
-
-a.
+Use the nzge data for this problem. Load the data set
 
 ```{r}
+nzge <- load("~/R and Git/STATS-506-PS4/nzge.rda")
+```
+
+a. Generate a table (which can just be a nicely printed tibble) of vote count (regardless of party) per year/type. Make sure to sort it by vote count.
+
+```{r}
+vote_count <- nzge %>% 
+            group_by(voting_type, election_year) %>% 
+            summarize(count = sum(votes)) %>%
+            arrange(desc(count)) %>%
+            ungroup()
+vote_count
+```
+
+b. Focus only on the 2014 election. Report the proportion of votes for each party in the Candidate election. Again, produce a nice table and sort it by percent of vote.
+
+```{r}
+year_2014 <- nzge %>% 
+            filter(election_year == "2014", voting_type == "Candidate") %>%
+            group_by(party) %>%
+            summarise(votes = sum(votes)) %>%
+            mutate(proportion_votes = (votes / sum(votes)) * 100) %>%
+            arrange(desc(proportion_votes)) %>%
+            ungroup()
+year_2014
 
 ```
 
-b.
+c. Produce a nice table indicating, for each year, which party won the Candidate vote and which party won the Party vote.
 
 ```{r}
-
-```
-
-c.
-
-```{r}
+who_won_what <- nzge %>%
+                group_by(election_year, voting_type, party) %>%
+                summarize(total_votes = sum(votes), .groups = "drop") %>%
+                group_by(election_year, voting_type) %>%
+                mutate(max_votes = max(total_votes)) %>%
+                filter(total_votes == max_votes) %>%
+                arrange(election_year, voting_type) %>%
+                ungroup()
+who_won_what
 
 ```
 
