@@ -1,0 +1,89 @@
+---
+title: "ps4_yeomans"
+author: "Sydney Yeomans"
+format:
+  html:
+    embed-resources: true
+editor: visual
+---
+
+## Problem 1
+
+Use the nzge data for this problem.
+
+a.
+
+```{r}
+
+```
+
+b.
+
+```{r}
+
+```
+
+c.
+
+```{r}
+
+```
+
+
+
+## Problem 2
+
+Use the “ATP Matches” data from 2019
+
+a.
+
+```{r}
+
+```
+
+b.
+
+```{r}
+
+```
+
+c.
+
+```{r}
+
+```
+
+d.
+
+```{r}
+
+```
+
+
+
+
+
+## Problem 3
+
+Use the NYTimes Covid data
+
+a.
+
+```{r}
+
+```
+
+b.
+
+```{r}
+
+```
+
+c.
+
+```{r}
+
+```
+
+
+
