@@ -10,6 +10,7 @@ editor: visual
 ## Tidyverse packages
 
 ```{r}
+#| echo: true
 library(tidyverse)
 library(dplyr)
 
@@ -20,12 +21,14 @@ library(dplyr)
 Use the nzge data for this problem. Load the data set
 
 ```{r}
+#| echo: true
 nzge <- load("~/R and Git/STATS-506-PS4/nzge.rda")
 ```
 
 a. Generate a table (which can just be a nicely printed tibble) of vote count (regardless of party) per year/type. Make sure to sort it by vote count.
 
 ```{r}
+#| echo: true
 vote_count <- nzge %>% 
             group_by(voting_type, election_year) %>% 
             summarize(count = sum(votes)) %>%
@@ -37,6 +40,7 @@ vote_count
 b. Focus only on the 2014 election. Report the proportion of votes for each party in the Candidate election. Again, produce a nice table and sort it by percent of vote.
 
 ```{r}
+#| echo: true
 year_2014 <- nzge %>% 
             filter(election_year == "2014", voting_type == "Candidate") %>%
             group_by(party) %>%
@@ -51,6 +55,7 @@ year_2014
 c. Produce a nice table indicating, for each year, which party won the Candidate vote and which party won the Party vote.
 
 ```{r}
+#| echo: true
 who_won_what <- nzge %>%
                 group_by(election_year, voting_type, party) %>%
                 summarize(total_votes = sum(votes), .groups = "drop") %>%
@@ -70,6 +75,7 @@ who_won_what
 Use the “ATP Matches” data from 2019
 
 ```{r}
+#| echo: true
 atp <- read.csv("https://raw.githubusercontent.com/JeffSackmann/tennis_atp/refs/heads/master/atp_matches_2019.csv")
 
 ```
@@ -77,17 +83,19 @@ atp <- read.csv("https://raw.githubusercontent.com/JeffSackmann/tennis_atp/refs/
 a. How many tournaments took place in 2019?
 
 ```{r}
+#| echo: true
 tournaments <- atp %>%
               summarize(num_tourn = n_distinct(tourney_id))
               
 tournaments
 
 ```
-There were a toal of 128 tournaments in the year 2019. 
+There were a total of 128 tournaments in the year 2019. 
 
 b. Did any player win more than one tournament? If so, how many players won more than one tournament, and how many tournaments did the most winning player(s) win?
 
 ```{r}
+#| echo: true
 play_win <- atp %>%
             group_by(winner_name) %>%
             summarize(wins = n()) %>%
@@ -96,21 +104,58 @@ play_win <- atp %>%
             ungroup()
 play_win
 ```
-We do see that some players won multiple tournaments. In total 171 players won more than one tournament and the player with the most amount of wins was Rafael Nadal. 
+We do see that some players won multiple tournaments. In total 171 players won more than one tournament and the player with the most amount of wins was Rafael Nadal. Found the n() function thanks to looking through the references for summarize function at <https://dplyr.tidyverse.org/reference/summarise.html>. 
 
 
 c. Is there any evidence that winners have more aces than losers? (If you address this with a hypothesis test, do not use base R functionality - continue to remain in the Tidyverse.)
 
 ```{r}
+#| echo: true
+#install.packages("infer")
+#library(infer)
 
+#the hypothesis test we will be testing is 
+#H_0: aces_winner (w_ace) = aces_losers (l_ace)
+#H_A: aces_winner > aces_losers
+#hypo_test <- atp %>%
+             #specify(response = "", explanatory = "") %>%
+             #hypothesize() a bit hard
+
+aces <- atp %>%
+        summarize(mean_winners = mean(w_ace, na.rm = TRUE), 
+                  mean_losers = mean(l_ace, na.rm = TRUE),
+                  sd_winners = sd(w_ace, na.rm = TRUE),
+                  sd_losers = sd(l_ace, na.rm = TRUE),
+                  mean_diff = mean_winners - mean_losers)
+aces
 ```
+Since the hypothesis testing within tidyverse seemed like a lot to learn, I decided to just stick with doing some summary statistics instead. From this we see that the mean aces for winners is $7.50$, rounded to two decimal places. On the other hand, the mean aces for losers is $5.79$, rounded to two decimal places. After finding this and the standard deviation from both, we took the difference in means and found the difference was $1.70$, so we can, informally, say winners on average have more aces than losers. Also, the standard deviations for both groups were quite close meaning the groups had similar variability. 
 
 d. Identify the player(s) with the highest win-rate. (Note that this is NOT asking for the highest number of wins.) Restrict to players with at least 5 matches.
 
 ```{r}
+#win rate means highest win to loss ratio, number wins / # opportunities
+wins_tot <- atp %>%
+            group_by(winner_id, winner_name) %>%
+            summarize(num_wins = n(), .groups = "drop")
 
+loss_tot <- atp %>%
+            group_by(loser_id, loser_name) %>%
+            summarize(num_losses = n(), .groups = "drop")
+
+win_rate <- full_join(wins_tot, loss_tot, 
+                      by = c("winner_id" = "loser_id",
+                             "winner_name" = "loser_name")) %>%
+            rename(player_id = winner_id, player_name = winner_name) %>%
+            mutate(num_wins = ifelse(is.na(num_wins), 0, num_wins),
+                   num_losses = ifelse(is.na(num_losses), 0, num_losses),
+                   total_matches = num_wins + num_losses,
+                   win_rate = num_wins / total_matches) %>%
+           filter(total_matches >= 5) %>%
+           arrange(desc(win_rate))
+win_rate
 ```
-
+Lots of the players with the highest win rate showed up in the previous part with the players with the highest wins. I used a full join on the data set because I wanted to match the IDs of the winners and losers to a name, and the full join returns in a final data set, all rows, and all columns from both data sets. I found how to combine two tidyverse tibbles using <https://datascienceplus.com/merging-datasets-with-tidyverse/>. 
 
 
 
@@ -127,8 +172,16 @@ nyt <- read.csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/he
 a. How many major and minor spikes in cases were there?
 
 ```{r}
+library(ggplot2)
+ggplot(data = nyt, aes(x = date, y = cases)) +
+    geom_point() +
+    geom_smooth() +
+    labs(title = "Scatterplot of Cases By Date",
+            x = "Date",
+            y = "Number of Cases")
 
 ```
+There were 7 major and minor spikes in cases. These correlate to 
 
 b. For the states with the highest and lowest overall rates per population, what differences do you see in their trajectories over time?
 
