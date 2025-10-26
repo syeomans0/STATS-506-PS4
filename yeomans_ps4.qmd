@@ -172,16 +172,27 @@ nyt <- read.csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/he
 a. How many major and minor spikes in cases were there?
 
 ```{r}
-library(ggplot2)
-ggplot(data = nyt, aes(x = date, y = cases)) +
+#library(ggplot2)
+
+nyt <- nyt %>%
+       mutate(month = format(as.Date(date), "%Y-%m")) %>%  
+       group_by(month) %>%
+       summarize(monthly_cases = sum(cases, na.rm = TRUE))
+
+ggplot(data = nyt, aes(x = month, y = monthly_cases, group = 1)) +
+    geom_line() + 
     geom_point() +
-    geom_smooth() +
-    labs(title = "Scatterplot of Cases By Date",
-            x = "Date",
-            y = "Number of Cases")
+    labs(title = "Monthly Covid-19 Cases in the US",
+             x = "Month",
+             y = "Total Cases") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7))
+
 
 ```
-There were 7 major and minor spikes in cases. These correlate to 
+There were 2 major spikes and 5 minor spikes in monthly cases. The major spikes are in December, 2020 and January, 2022. The smaller, minor, spikes are April, 2020, July, 2020, August, 2021, July, 2022, and December 2022. 
+
+Used this to extract the month and year from the date: <https://www.statology.org/extract-month-from-date-in-r/> and then I was struggling with the x-axis variable labels being too clustered so I asked Chatgpt how to tilt it and make the text smaller and got the last line of code. 
 
 b. For the states with the highest and lowest overall rates per population, what differences do you see in their trajectories over time?
 
