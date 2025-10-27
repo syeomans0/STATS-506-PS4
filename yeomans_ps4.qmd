@@ -197,7 +197,17 @@ Used this to extract the month and year from the date: <https://www.statology.or
 b. For the states with the highest and lowest overall rates per population, what differences do you see in their trajectories over time?
 
 ```{r}
+#library(gridExtra)
+#We don't have a state variable?? so just do at the national level?
 
+high_low <- nyt %>% 
+            summarize(highest_rate = max(cases_avg_per_100k, na.rm = TRUE),
+                      lowest_rate = min(cases_avg_per_100k, na.rm = TRUE))
+           
+high_low
+
+#Multiple with cases avg per 100k at 0
+#all dates before march 5 2020 are at 0
 ```
 
 c. Identify, to the best of your ability without a formal test, the first five states to experience Covid in a substantial way.
