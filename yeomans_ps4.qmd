@@ -165,7 +165,7 @@ Lots of the players with the highest win rate showed up in the previous part wit
 Use the NYTimes Covid data
 
 ```{r}
-nyt <- read.csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/heads/master/rolling-averages/us.csv")
+nyt <- read.csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/heads/master/rolling-averages/us-states.csv")
 
 ```
 
@@ -173,6 +173,8 @@ a. How many major and minor spikes in cases were there?
 
 ```{r}
 #library(ggplot2)
+
+nyt$date <- as.Date(nyt$date)
 
 nyt <- nyt %>%
        mutate(month = format(as.Date(date), "%Y-%m")) %>%  
@@ -185,7 +187,7 @@ ggplot(data = nyt, aes(x = month, y = monthly_cases, group = 1)) +
     labs(title = "Monthly Covid-19 Cases in the US",
              x = "Month",
              y = "Total Cases") +
-    theme_minimal() +
+    theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7))
 
 
@@ -200,15 +202,37 @@ b. For the states with the highest and lowest overall rates per population, what
 #library(gridExtra)
 #We don't have a state variable?? so just do at the national level?
 
+#got multiple outputs so avg the cases avg per 100k?
+
 high_low <- nyt %>% 
-            summarize(highest_rate = max(cases_avg_per_100k, na.rm = TRUE),
-                      lowest_rate = min(cases_avg_per_100k, na.rm = TRUE))
+            group_by(state) %>%
+            summarize(highest_rate = max(cases_avg_per_100k, na.rm = TRUE)) %>%
+            filter(highest_rate == max(highest_rate) | highest_rate == min(highest_rate))
+
            
 high_low
 
 #Multiple with cases avg per 100k at 0
-#all dates before march 5 2020 are at 0
+#highest cases_avg per 100k was american Samoa 
+#and lowest was Maine, compare these two over time
+#filter to these two states
+
+nyt_highlow <- nyt %>%
+               filter(state == "American Samoa" | state == "Maine")
+
+nyt_highlow$date <- as.Date(nyt_highlow$date)
+
+ggplot(data = nyt_highlow, aes(x = date, y= cases_avg_per_100k, color = state)) +
+    geom_line(linewidth = 1) +
+    labs(title = "Comparison of States with Highest and Lowest Overall Rates per Population",
+             x = "Date",
+             y = "Cases on Average per 100K",
+             color = "States (High vs. Low)") +
+    theme_bw()
+
 ```
+Discuss the trajectories over time: 
+
 
 c. Identify, to the best of your ability without a formal test, the first five states to experience Covid in a substantial way.
 
