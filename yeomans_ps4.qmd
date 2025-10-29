@@ -179,7 +179,8 @@ nyt$date <- as.Date(nyt$date)
 nyt <- nyt %>%
        mutate(month = format(as.Date(date), "%Y-%m")) %>%  
        group_by(month) %>%
-       summarize(monthly_cases = sum(cases, na.rm = TRUE))
+       summarize(monthly_cases = sum(cases, na.rm = TRUE)) %>%
+       ungroup()
 
 ggplot(data = nyt, aes(x = month, y = monthly_cases, group = 1)) +
     geom_line() + 
@@ -207,7 +208,8 @@ b. For the states with the highest and lowest overall rates per population, what
 high_low <- nyt %>% 
             group_by(state) %>%
             summarize(highest_rate = max(cases_avg_per_100k, na.rm = TRUE)) %>%
-            filter(highest_rate == max(highest_rate) | highest_rate == min(highest_rate))
+            filter(highest_rate == max(highest_rate) | highest_rate == min(highest_rate)) %>%
+            ungroup()
 
            
 high_low
@@ -224,7 +226,7 @@ nyt_highlow$date <- as.Date(nyt_highlow$date)
 
 ggplot(data = nyt_highlow, aes(x = date, y= cases_avg_per_100k, color = state)) +
     geom_line(linewidth = 1) +
-    labs(title = "Comparison of States with Highest and Lowest Overall Rates per Population",
+    labs(title = "Comparison of States with Highest and Lowest Overall Case Rates per Population",
              x = "Date",
              y = "Cases on Average per 100K",
              color = "States (High vs. Low)") +
@@ -238,7 +240,61 @@ c. Identify, to the best of your ability without a formal test, the first five s
 
 ```{r}
 
+#A high number of new COVID-19 cases per 100,000 people over a period, like 7 days
+
+#first_week <- nyt %>%
+#       group_by(state) %>%
+#       filter(date >= as.Date("2020-03-13") & date <= as.Date("2020-03-20")) %>%
+#       ungroup()
+
+#nyt_first_week_substantial <- first_week %>%
+#  filter(cases_avg_per_100k >= 5)
+
+#this return zero cases so let's not limit it to first week
+#rm(first_five)
+
+first_date <- nyt %>%
+       group_by(state) %>%
+       summarize(substantial = min(date[cases_avg_per_100k >= 5], na.rm =TRUE)) %>%
+       arrange(substantial) %>%
+       ungroup()
+first_date
+
+#first five were NY, NJ, LA, MA, and tie for fifth CT and MI
+#take a closer look at CT and MI
+
+tie_breaker <- nyt %>%
+              group_by(state) %>%
+              filter(state == "Michigan" | state == "Connecticut") %>%
+              filter(date == as.Date("2020-03-28")) %>%
+              arrange(desc(cases_avg_per_100k)) %>%
+              ungroup()
+print(tie_breaker)
+#looks like MI is worse off in this case so sticking with that for fifth place
 ```
 
+
+
+```{r}
+#now to graph
+five_states <- c("New York", "New Jersey", "Louisiana", "Massachusetts", "Michigan")
+
+first_year <- nyt %>%
+                  filter(state %in% five_states) %>%
+                  mutate(date = as.Date(date),
+                         year = format(date, "%Y"),
+                         state = factor(state, levels = five_states)) %>%
+                  filter(year == "2020")
+
+ggplot(first_year, aes(x = date, y = cases_avg_per_100k)) +
+   geom_line() +
+   labs(title = "First Five States to Experience Covid in a Substantial Way (2020)",
+             x = "Date",
+             y = "Cases on Average per 100K") +
+   facet_wrap(~ state) +
+   theme_bw()
+
+```
+Discussion: 
 
 
