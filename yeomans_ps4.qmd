@@ -22,7 +22,9 @@ Use the nzge data for this problem. Load the data set
 
 ```{r}
 #| echo: true
-nzge <- load("~/R and Git/STATS-506-PS4/nzge.rda")
+load("nzge.rda")
+#class(nzge)
+#str(nzge)
 ```
 
 a. Generate a table (which can just be a nicely printed tibble) of vote count (regardless of party) per year/type. Make sure to sort it by vote count.
@@ -89,8 +91,17 @@ tournaments <- atp %>%
               
 tournaments
 
+tourn_date <- atp %>%
+              summarize(turn_dates = n_distinct(tourney_date))
+tourn_date
+
+exclude_2018 <- atp %>%
+                filter(tourney_date != "20181231") %>%
+                summarize(num_tourn = n_distinct(tourney_id))
+exclude_2018
+
 ```
-There were a total of 128 tournaments in the year 2019. 
+To attempt to get an answer for this problem, I took a look at the unique tournament IDs. This was my first attempt at getting the number of tournaments and found there were a total of 128 tournaments. Now it was pointed out that the dates for the tournament include some from the year 2018, namely, the date 2018-12-31 is included in this data set, and the total number of unique dates is 49. This 2018 tournament date is literally the last day of that year, but I still think excluding it would be beneficial. After excluding this one date from 2018, it was seen that the actual number of tournaments in the year of 2019 was 125. 
 
 b. Did any player win more than one tournament? If so, how many players won more than one tournament, and how many tournaments did the most winning player(s) win?
 
@@ -165,6 +176,7 @@ Lots of the players with the highest win rate showed up in the previous part wit
 Use the NYTimes Covid data
 
 ```{r}
+#| echo: true
 nyt <- read.csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/heads/master/rolling-averages/us-states.csv")
 
 ```
@@ -172,17 +184,18 @@ nyt <- read.csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/he
 a. How many major and minor spikes in cases were there?
 
 ```{r}
+#| echo: true
 #library(ggplot2)
 
 nyt$date <- as.Date(nyt$date)
 
-nyt <- nyt %>%
+nyt_spikes <- nyt %>%
        mutate(month = format(as.Date(date), "%Y-%m")) %>%  
        group_by(month) %>%
        summarize(monthly_cases = sum(cases, na.rm = TRUE)) %>%
        ungroup()
 
-ggplot(data = nyt, aes(x = month, y = monthly_cases, group = 1)) +
+ggplot(data = nyt_spikes, aes(x = month, y = monthly_cases, group = 1)) +
     geom_line() + 
     geom_point() +
     labs(title = "Monthly Covid-19 Cases in the US",
@@ -200,6 +213,7 @@ Used this to extract the month and year from the date: <https://www.statology.or
 b. For the states with the highest and lowest overall rates per population, what differences do you see in their trajectories over time?
 
 ```{r}
+#| echo: true
 #library(gridExtra)
 #We don't have a state variable?? so just do at the national level?
 
@@ -214,6 +228,10 @@ high_low <- nyt %>%
            
 high_low
 
+```
+
+```{r}
+#| echo: true
 #Multiple with cases avg per 100k at 0
 #highest cases_avg per 100k was american Samoa 
 #and lowest was Maine, compare these two over time
@@ -239,6 +257,7 @@ Discuss the trajectories over time:
 c. Identify, to the best of your ability without a formal test, the first five states to experience Covid in a substantial way.
 
 ```{r}
+#| echo: true
 
 #A high number of new COVID-19 cases per 100,000 people over a period, like 7 days
 
@@ -258,7 +277,7 @@ first_date <- nyt %>%
        summarize(substantial = min(date[cases_avg_per_100k >= 5], na.rm =TRUE)) %>%
        arrange(substantial) %>%
        ungroup()
-first_date
+head(first_date, 10)
 
 #first five were NY, NJ, LA, MA, and tie for fifth CT and MI
 #take a closer look at CT and MI
@@ -276,6 +295,7 @@ print(tie_breaker)
 
 
 ```{r}
+#| echo: true
 #now to graph
 five_states <- c("New York", "New Jersey", "Louisiana", "Massachusetts", "Michigan")
 
