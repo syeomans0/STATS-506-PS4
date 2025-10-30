@@ -86,14 +86,14 @@ a. How many tournaments took place in 2019?
 
 ```{r}
 #| echo: true
-tournaments <- atp %>%
-              summarize(num_tourn = n_distinct(tourney_id))
+#tournaments <- atp %>%
+#              summarize(num_tourn = n_distinct(tourney_id))
               
-tournaments
+#tournaments
 
-tourn_date <- atp %>%
-              summarize(turn_dates = n_distinct(tourney_date))
-tourn_date
+#tourn_date <- atp %>%
+#              summarize(turn_dates = n_distinct(tourney_date))
+#tourn_date
 
 exclude_2018 <- atp %>%
                 filter(tourney_date != "20181231") %>%
@@ -103,28 +103,37 @@ exclude_2018
 ```
 To attempt to get an answer for this problem, I took a look at the unique tournament IDs. This was my first attempt at getting the number of tournaments and found there were a total of 128 tournaments. Now it was pointed out that the dates for the tournament include some from the year 2018, namely, the date 2018-12-31 is included in this data set, and the total number of unique dates is 49. This 2018 tournament date is literally the last day of that year, but I still think excluding it would be beneficial. After excluding this one date from 2018, it was seen that the actual number of tournaments in the year of 2019 was 125. 
 
+
 b. Did any player win more than one tournament? If so, how many players won more than one tournament, and how many tournaments did the most winning player(s) win?
 
 ```{r}
 #| echo: true
-play_win <- atp %>%
-            group_by(winner_name) %>%
-            summarize(wins = n()) %>%
-            filter(wins > 1) %>%
-            arrange(desc(wins)) %>%
-            ungroup()
-play_win
+#play_win <- atp %>%
+            #group_by(winner_name) %>%
+            #summarize(wins = n()) %>%
+            #filter(wins > 1) %>%
+            #arrange(desc(wins)) %>%
+            #ungroup()
+#play_win
+
+play_win2 <- atp %>%
+             filter(tourney_date != "20181231") %>%
+             group_by(winner_name) %>%
+             summarize(wins = n()) %>%
+             filter(wins > 1) %>%
+             arrange(desc(wins)) %>%
+             ungroup()
+head(play_win2)
 ```
-We do see that some players won multiple tournaments. In total 171 players won more than one tournament and the player with the most amount of wins was Rafael Nadal. Found the n() function thanks to looking through the references for summarize function at <https://dplyr.tidyverse.org/reference/summarise.html>. 
+We do see that some players won multiple tournaments. In total 171 players won more than one tournament and the player with the most amount of wins was Rafael Nadal. Once again, I first attempted this without realizing there was the three tournaments that were still in 2018. Going back and excluding this one date we still find some players won multiple tournaments and in total had 170 players who won more than one tournament. The player with the most amount of wins is the same, Rafael Nadal with 60 wins.
+
+Found the n() function thanks to looking through the references for summarize function at <https://dplyr.tidyverse.org/reference/summarise.html>. 
 
 
 c. Is there any evidence that winners have more aces than losers? (If you address this with a hypothesis test, do not use base R functionality - continue to remain in the Tidyverse.)
 
 ```{r}
 #| echo: true
-#install.packages("infer")
-#library(infer)
-
 #the hypothesis test we will be testing is 
 #H_0: aces_winner (w_ace) = aces_losers (l_ace)
 #H_A: aces_winner > aces_losers
@@ -132,13 +141,22 @@ c. Is there any evidence that winners have more aces than losers? (If you addres
              #specify(response = "", explanatory = "") %>%
              #hypothesize() a bit hard
 
-aces <- atp %>%
-        summarize(mean_winners = mean(w_ace, na.rm = TRUE), 
-                  mean_losers = mean(l_ace, na.rm = TRUE),
-                  sd_winners = sd(w_ace, na.rm = TRUE),
-                  sd_losers = sd(l_ace, na.rm = TRUE),
-                  mean_diff = mean_winners - mean_losers)
-aces
+#aces <- atp %>%
+        #summarize(mean_winners = mean(w_ace, na.rm = TRUE), 
+        #          mean_losers = mean(l_ace, na.rm = TRUE),
+        #          sd_winners = sd(w_ace, na.rm = TRUE),
+        #          sd_losers = sd(l_ace, na.rm = TRUE),
+        #          mean_diff = mean_winners - mean_losers)
+#aces
+
+aces_wout_2018 <- atp %>%
+                  filter(tourney_date != "20181231") %>%
+                  summarize(mean_winners = mean(w_ace, na.rm = TRUE), 
+                            mean_losers = mean(l_ace, na.rm = TRUE),
+                            sd_winners = sd(w_ace, na.rm = TRUE),
+                            sd_losers = sd(l_ace, na.rm = TRUE),
+                            mean_diff = mean_winners - mean_losers)
+aces_wout_2018
 ```
 Since the hypothesis testing within tidyverse seemed like a lot to learn, I decided to just stick with doing some summary statistics instead. From this we see that the mean aces for winners is $7.50$, rounded to two decimal places. On the other hand, the mean aces for losers is $5.79$, rounded to two decimal places. After finding this and the standard deviation from both, we took the difference in means and found the difference was $1.70$, so we can, informally, say winners on average have more aces than losers. Also, the standard deviations for both groups were quite close meaning the groups had similar variability. 
 
@@ -147,12 +165,16 @@ d. Identify the player(s) with the highest win-rate. (Note that this is NOT aski
 ```{r}
 #win rate means highest win to loss ratio, number wins / # opportunities
 wins_tot <- atp %>%
+            filter(tourney_id != "20181231") %>%
             group_by(winner_id, winner_name) %>%
-            summarize(num_wins = n(), .groups = "drop")
+            summarize(num_wins = n(), .groups = "drop") %>%
+            ungroup()
 
 loss_tot <- atp %>%
+            filter(tourney_id != "20181231") %>%
             group_by(loser_id, loser_name) %>%
-            summarize(num_losses = n(), .groups = "drop")
+            summarize(num_losses = n(), .groups = "drop") %>%
+            ungroup()
 
 win_rate <- full_join(wins_tot, loss_tot, 
                       by = c("winner_id" = "loser_id",
@@ -162,11 +184,14 @@ win_rate <- full_join(wins_tot, loss_tot,
                    num_losses = ifelse(is.na(num_losses), 0, num_losses),
                    total_matches = num_wins + num_losses,
                    win_rate = num_wins / total_matches) %>%
-           filter(total_matches >= 5) %>%
-           arrange(desc(win_rate))
-win_rate
+            filter(total_matches >= 5) %>%
+            select(player_name, win_rate) %>%
+            arrange(desc(win_rate))
+head(win_rate)
 ```
-Lots of the players with the highest win rate showed up in the previous part with the players with the highest wins. I used a full join on the data set because I wanted to match the IDs of the winners and losers to a name, and the full join returns in a final data set, all rows, and all columns from both data sets. I found how to combine two tidyverse tibbles using <https://datascienceplus.com/merging-datasets-with-tidyverse/>. 
+Lots of the players with the highest win rate showed up in the previous part with the players with the highest wins. The player with the highest win rate is Rafael Nadal with a win rate of $86.95%$, they had 60 wins and 9 losses. The player with the second highest win rate is Novak Djokovic with a rate of $84.05%$.
+
+I used a full join on the data set because I wanted to match the IDs of the winners and losers to a name, and the full join returns in a final data set, all rows, and all columns from both data sets. I found how to combine two tidyverse tibbles using <https://datascienceplus.com/merging-datasets-with-tidyverse/>. 
 
 
 
@@ -190,15 +215,15 @@ a. How many major and minor spikes in cases were there?
 nyt$date <- as.Date(nyt$date)
 
 nyt_spikes <- nyt %>%
-       mutate(month = format(as.Date(date), "%Y-%m")) %>%  
-       group_by(month) %>%
-       summarize(monthly_cases = sum(cases, na.rm = TRUE)) %>%
-       ungroup()
+              mutate(month = format(as.Date(date), "%Y-%m")) %>%  
+              group_by(month) %>%
+              summarize(monthly_cases = sum(cases, na.rm = TRUE)) %>%
+              ungroup()
 
 ggplot(data = nyt_spikes, aes(x = month, y = monthly_cases, group = 1)) +
     geom_line() + 
     geom_point() +
-    labs(title = "Monthly Covid-19 Cases in the US",
+    labs(title = "Monthly COVID Cases in the US",
              x = "Month",
              y = "Total Cases") +
     theme_bw() +
@@ -222,9 +247,8 @@ b. For the states with the highest and lowest overall rates per population, what
 high_low <- nyt %>% 
             group_by(state) %>%
             summarize(highest_rate = max(cases_avg_per_100k, na.rm = TRUE)) %>%
-            filter(highest_rate == max(highest_rate) | highest_rate == min(highest_rate)) %>%
+            filter(highest_rate == max(highest_rate) | highest_rate == min(highest_rate))%>%
             ungroup()
-
            
 high_low
 
@@ -244,7 +268,8 @@ nyt_highlow$date <- as.Date(nyt_highlow$date)
 
 ggplot(data = nyt_highlow, aes(x = date, y= cases_avg_per_100k, color = state)) +
     geom_line(linewidth = 1) +
-    labs(title = "Comparison of States with Highest and Lowest Overall Case Rates per Population",
+    labs(title = "Comparison of States with Highest and Lowest Overall COVID Cases",
+         subtitle = "(Cases are Average Rate per Population)",
              x = "Date",
              y = "Cases on Average per 100K",
              color = "States (High vs. Low)") +
@@ -258,7 +283,7 @@ c. Identify, to the best of your ability without a formal test, the first five s
 
 ```{r}
 #| echo: true
-
+#IGNORE - this was before the announcement came out :/
 #A high number of new COVID-19 cases per 100,000 people over a period, like 7 days
 
 #first_week <- nyt %>%
@@ -277,7 +302,7 @@ first_date <- nyt %>%
        summarize(substantial = min(date[cases_avg_per_100k >= 5], na.rm =TRUE)) %>%
        arrange(substantial) %>%
        ungroup()
-head(first_date, 10)
+head(first_date, 8)
 
 #first five were NY, NJ, LA, MA, and tie for fifth CT and MI
 #take a closer look at CT and MI
@@ -297,24 +322,93 @@ print(tie_breaker)
 ```{r}
 #| echo: true
 #now to graph
-five_states <- c("New York", "New Jersey", "Louisiana", "Massachusetts", "Michigan")
+#five_states <- c("New York", "New Jersey", "Louisiana", "Massachusetts", "Michigan")
 
-first_year <- nyt %>%
-                  filter(state %in% five_states) %>%
-                  mutate(date = as.Date(date),
-                         year = format(date, "%Y"),
-                         state = factor(state, levels = five_states)) %>%
-                  filter(year == "2020")
+#first_year <- nyt %>%
+#              filter(state %in% five_states) %>%
+#              mutate(date = as.Date(date),
+#                     year = format(date, "%Y"),
+#                     state = factor(state, levels = five_states)) %>%
+#              filter(year == "2020")
 
-ggplot(first_year, aes(x = date, y = cases_avg_per_100k)) +
+#ggplot(first_year, aes(x = date, y = cases_avg_per_100k)) +
+#   geom_line() +
+#   labs(title = "First Five States to Experience COVID in a Substantial Way (2020)",
+#             x = "Date",
+#             y = "Cases on Average per 100K") +
+#   facet_wrap(~ state) +
+#   theme_bw()
+
+```
+
+```{r}
+#without any cleaning and finding the actual values, doing EDA...
+#make a graph of trajectories for the first year for all the months
+
+nyt_first <- nyt %>%
+             group_by(state) %>%
+             mutate(date = as.Date(date),
+                    year = format(date, "%Y"),
+                    state = factor(state)) %>%
+             filter(year == "2020")
+
+gg_5_1 <- ggplot(nyt_first, aes(x = date, y = cases_avg_per_100k)) +
    geom_line() +
-   labs(title = "First Five States to Experience Covid in a Substantial Way (2020)",
+   labs(title = "First States to Experience COVID in a Substantial Way (2020)",
              x = "Date",
              y = "Cases on Average per 100K") +
    facet_wrap(~ state) +
    theme_bw()
 
-```
-Discussion: 
+#first date in the data set: 2020-01-21
+#end of april: 2020-04-30
 
+first_four_mon <- nyt %>%
+                  group_by(state) %>%
+                  mutate(date = as.Date(date),
+                         year = format(date, "%Y"),
+                         state = factor(state)) %>%
+                  filter(date >= as.Date("2020-03-01"),
+                         date <= as.Date("2020-04-30"))
+
+gg_5_2 <- ggplot(first_four_mon, aes(x = date, y = cases_avg_per_100k)) +
+          geom_line() +
+          labs(title = "First States to Experience COVID in a Substantial Way (2020)",
+                   x = "Date",
+                   y = "Cases on Average per 100K") +
+          facet_wrap(~ state) +
+          theme_bw()
+
+gg_5_2
+```
+To try to answer this question (after reading the announcement that said: The goal is *not* to statistically answer the question, then draw a plot representing the answer) I just quickly made a plot that showed the states cases average per 100k in the first year in the data set to see who got hit first. After this I tried to limit it to the first few months in the data set, namely January and April to further see who got hit the earliest. From this filtering we can see that it seems like NY, NJ, Guam, LA, MA, CT, RI, DC, and MI are seeing some early peaks. With this, I cut it down to these states and see if we can find the first 5.  
+
+```{r}
+nine_states <- c("New York", "New Jersey", "Guam", "Louisiana", "Massachusetts", 
+                  "Connecticut", "Rhode Island", "District of Columbia", 
+                  "Michigan")
+
+top_nine <- nyt %>%
+            filter(state %in% nine_states) %>%
+            mutate(date = as.Date(date),
+                   year = format(date, "%Y"),
+                   state = factor(state, levels = nine_states)) %>%
+            filter(date >= as.Date("2020-03-01"),
+                   date <= as.Date("2020-04-30"))
+
+gg_5_3 <- ggplot(top_nine, aes(x = date, y = cases_avg_per_100k)) +
+          geom_line() +
+          labs(title = "Top Nine States to Experience COVID in a Substantial Way (2020)",
+                   x = "Date",
+                   y = "Cases on Average per 100K") +
+          facet_wrap(~ state) +
+          theme_bw()
+
+gg_5_3
+
+
+```
+From this new filtered plot, it definitely seems like New York and New Jersey are in the first five to experience COVID in a substantial way. The other three are kind of convoluted. To compare the other 7 and find the first three, I said substantial is reaching 10 cases average per 100k the earliest. This limit helped to find those who got hit the hardest first. Guam hits 10 around April 1, Louisiana breaks 10 cases right before April 1, and Massachusetts hits it right before April 1 as well so Guam is out. CT hits 10 at April 1 so it is also gone. RI, DC and MI also hit it on or after April 1 so they are out for first 4. That means our first four to experience COVID in a substantial way is NY, NJ, LA, and MA. Now we need to find the fifth one. It is very close but, eyeballing, it looks like CT is ever so slightly above 10 cases on April 1 whereas MI is right at 10 cases on April 1.
+
+Therefore the first five states to to experience COVID in a substantial way are NY, NJ, LA, MA, and CT. This is very close to the actual answer I found above. 
 
