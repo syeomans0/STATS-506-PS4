@@ -1,5 +1,5 @@
 ---
-title: "ps4_yeomans"
+title: "Problem Set #4 - STATS 506"
 author: "Sydney Yeomans"
 format:
   html:
@@ -13,8 +13,8 @@ editor: visual
 #| echo: true
 library(tidyverse)
 library(dplyr)
-
 ```
+
 
 ## Problem 1
 
@@ -23,8 +23,6 @@ Use the nzge data for this problem. Load the data set
 ```{r}
 #| echo: true
 load("nzge.rda")
-#class(nzge)
-#str(nzge)
 ```
 
 a. Generate a table (which can just be a nicely printed tibble) of vote count (regardless of party) per year/type. Make sure to sort it by vote count.
@@ -51,7 +49,6 @@ year_2014 <- nzge %>%
             arrange(desc(proportion_votes)) %>%
             ungroup()
 year_2014
-
 ```
 
 c. Produce a nice table indicating, for each year, which party won the Candidate vote and which party won the Party vote.
@@ -67,7 +64,6 @@ who_won_what <- nzge %>%
                 arrange(election_year, voting_type) %>%
                 ungroup()
 who_won_what
-
 ```
 
 
@@ -79,7 +75,6 @@ Use the “ATP Matches” data from 2019
 ```{r}
 #| echo: true
 atp <- read.csv("https://raw.githubusercontent.com/JeffSackmann/tennis_atp/refs/heads/master/atp_matches_2019.csv")
-
 ```
 
 a. How many tournaments took place in 2019?
@@ -99,7 +94,6 @@ exclude_2018 <- atp %>%
                 filter(tourney_date != "20181231") %>%
                 summarize(num_tourn = n_distinct(tourney_id))
 exclude_2018
-
 ```
 To attempt to get an answer for this problem, I took a look at the unique tournament IDs. This was my first attempt at getting the number of tournaments and found there were a total of 128 tournaments. Now it was pointed out that the dates for the tournament include some from the year 2018, namely, the date 2018-12-31 is included in this data set, and the total number of unique dates is 49. This 2018 tournament date is literally the last day of that year, but I still think excluding it would be beneficial. After excluding this one date from 2018, it was seen that the actual number of tournaments in the year of 2019 was 125. 
 
@@ -125,7 +119,9 @@ play_win2 <- atp %>%
              ungroup()
 head(play_win2)
 ```
-We do see that some players won multiple tournaments. In total 171 players won more than one tournament and the player with the most amount of wins was Rafael Nadal. Once again, I first attempted this without realizing there was the three tournaments that were still in 2018. Going back and excluding this one date we still find some players won multiple tournaments and in total had 170 players who won more than one tournament. The player with the most amount of wins is the same, Rafael Nadal with 60 wins.
+We do see that some players won multiple tournaments. In total 171 players won more than one tournament and the player with the most amount of wins was Rafael Nadal. This seems like a lot of players winning, but it comes from the fact there are multiple matches within the tournament itself and we aren't told an ``overall'' winner of the tournament in the data set. 
+
+Once again, I first attempted this without realizing there were the three tournaments still in 2018. Going back and excluding this one date, we still find some players won multiple tournaments and in total had 170 players who won more than one tournament match. The player with the most amount of wins is the same, Rafael Nadal with 60 wins.
 
 Found the n() function thanks to looking through the references for summarize function at <https://dplyr.tidyverse.org/reference/summarise.html>. 
 
@@ -158,7 +154,7 @@ aces_wout_2018 <- atp %>%
                             mean_diff = mean_winners - mean_losers)
 aces_wout_2018
 ```
-Since the hypothesis testing within tidyverse seemed like a lot to learn, I decided to just stick with doing some summary statistics instead. From this we see that the mean aces for winners is $7.50$, rounded to two decimal places. On the other hand, the mean aces for losers is $5.79$, rounded to two decimal places. After finding this and the standard deviation from both, we took the difference in means and found the difference was $1.70$, so we can, informally, say winners on average have more aces than losers. Also, the standard deviations for both groups were quite close meaning the groups had similar variability. 
+Since the hypothesis testing within tidyverse seemed like a lot to learn, I decided to just stick with doing some summary statistics instead. From this we see that the mean aces for winners is $7.45$, rounded to two decimal places. On the other hand, the mean aces for losers is $5.76$, rounded to two decimal places. After finding this and the standard deviation from both, we took the difference in means and found the difference was $1.68$, so we can, informally, say winners on average have more aces than losers. Also, the standard deviations for both groups were quite close meaning the groups had similar variability. 
 
 d. Identify the player(s) with the highest win-rate. (Note that this is NOT asking for the highest number of wins.) Restrict to players with at least 5 matches.
 
@@ -189,9 +185,9 @@ win_rate <- full_join(wins_tot, loss_tot,
             arrange(desc(win_rate))
 head(win_rate)
 ```
-Lots of the players with the highest win rate showed up in the previous part with the players with the highest wins. The player with the highest win rate is Rafael Nadal with a win rate of $86.95%$, they had 60 wins and 9 losses. The player with the second highest win rate is Novak Djokovic with a rate of $84.05%$.
+Lots of the players with the highest win rate showed up in the previous part with the players with the highest wins. The player with the highest win rate is Rafael Nadal with a win rate of $86.95%$, they had 60 wins and 9 losses. The player with the second highest win rate is Novak Djokovic with a rate of $84.05%$. Went back in and added the filter excluding 2018.
 
-I used a full join on the data set because I wanted to match the IDs of the winners and losers to a name, and the full join returns in a final data set, all rows, and all columns from both data sets. I found how to combine two tidyverse tibbles using <https://datascienceplus.com/merging-datasets-with-tidyverse/>. 
+I used a full join on the data set because I wanted to match the IDs of the winners and losers to a name, and the full join returns in a final data set, all rows, and all columns from both data sets. I found how to combine two tidyverse tibbles and how to do a full join using <https://datascienceplus.com/merging-datasets-with-tidyverse/>. 
 
 
 
@@ -203,7 +199,6 @@ Use the NYTimes Covid data
 ```{r}
 #| echo: true
 nyt <- read.csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/heads/master/rolling-averages/us-states.csv")
-
 ```
 
 a. How many major and minor spikes in cases were there?
@@ -228,10 +223,8 @@ ggplot(data = nyt_spikes, aes(x = month, y = monthly_cases, group = 1)) +
              y = "Total Cases") +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7))
-
-
 ```
-There were 2 major spikes and 5 minor spikes in monthly cases. The major spikes are in December, 2020 and January, 2022. The smaller, minor, spikes are April, 2020, July, 2020, August, 2021, July, 2022, and December 2022. 
+There were 2 major spikes and 5 minor spikes in monthly cases. The major spikes are in December, 2020 and January, 2022. The smaller, minor, spikes are April, 2020, July, 2020, August, 2021, July, 2022, and December 2022. I do know spikes are subjective so people might count more or less than me.
 
 Used this to extract the month and year from the date: <https://www.statology.org/extract-month-from-date-in-r/> and then I was struggling with the x-axis variable labels being too clustered so I asked Chatgpt how to tilt it and make the text smaller and got the last line of code. 
 
@@ -251,7 +244,6 @@ high_low <- nyt %>%
             ungroup()
            
 high_low
-
 ```
 
 ```{r}
@@ -274,9 +266,11 @@ ggplot(data = nyt_highlow, aes(x = date, y= cases_avg_per_100k, color = state)) 
              y = "Cases on Average per 100K",
              color = "States (High vs. Low)") +
     theme_bw()
-
 ```
-Discuss the trajectories over time: 
+For this problem, I started by investigating which state had the highest and lowest of the max cases average per 100k for their individual state. After this, we found the state with the highest cases average per 100k and the one with the lowest which were American Samoa and Maine, respectively. There were lots of states that had zero, but every state has at least some nonzero values eventually. Since this is the case we look for the highest and lowest of the maximum values of cases average per 100k, allowing me to compare the extremes in the outbreak. 
+
+The graph shows their trajectories over the course of the pandemic. Focusing on the blue line, Maine, we see that they experiences COVID starting in mid-2020 and had a peak at the start of 2021. After this, their number of average cases per 100k goes down until we hit the middle of 2021 where we see the trend go up pretty consistently. It drops again around, best guess, March 2022. After that we see one more small spike but then the number of average cases gradually goes down. Switching our focus to the red line, American Samoa, we see a different story. COVID didn't reach American Samoa until late 2021 and it hits hard, as we see a huge spike at the beginning of 2022, reaching over 500 average cases per 100k. After this huge spike, it drops right back down but we see two more spikes around July 2022 and September 2022 (guess at months based on the years on the bottom). 
+
 
 
 c. Identify, to the best of your ability without a formal test, the first five states to experience Covid in a substantial way.
@@ -338,7 +332,6 @@ print(tie_breaker)
 #             y = "Cases on Average per 100K") +
 #   facet_wrap(~ state) +
 #   theme_bw()
-
 ```
 
 ```{r}
@@ -405,10 +398,30 @@ gg_5_3 <- ggplot(top_nine, aes(x = date, y = cases_avg_per_100k)) +
           theme_bw()
 
 gg_5_3
-
-
 ```
 From this new filtered plot, it definitely seems like New York and New Jersey are in the first five to experience COVID in a substantial way. The other three are kind of convoluted. To compare the other 7 and find the first three, I said substantial is reaching 10 cases average per 100k the earliest. This limit helped to find those who got hit the hardest first. Guam hits 10 around April 1, Louisiana breaks 10 cases right before April 1, and Massachusetts hits it right before April 1 as well so Guam is out. CT hits 10 at April 1 so it is also gone. RI, DC and MI also hit it on or after April 1 so they are out for first 4. That means our first four to experience COVID in a substantial way is NY, NJ, LA, and MA. Now we need to find the fifth one. It is very close but, eyeballing, it looks like CT is ever so slightly above 10 cases on April 1 whereas MI is right at 10 cases on April 1.
 
-Therefore the first five states to to experience COVID in a substantial way are NY, NJ, LA, MA, and CT. This is very close to the actual answer I found above. 
+Therefore the first five states to to experience COVID in a substantial way are NY, NJ, LA, MA, and CT. This is very close to the actual answer I found earlier. Below is a graph of these 5 states for the whole year of 2020. I feel like this makes sense intuitively since the states with bigger populations and diversity most likely experiences COVID first, but I was kind of surprised by LA, since it is in the South and not as populated as the other states in the first 5.  
 
+```{r}
+#FINAL GRAPH FOR 3c
+funf_state <- c("New York", "New Jersey", "Louisiana", "Massachusetts", 
+                  "Connecticut")
+
+top_five <- nyt %>%
+            filter(state %in% funf_state) %>%
+            mutate(date = as.Date(date),
+                   year = format(date, "%Y"),
+                   state = factor(state, levels = funf_state)) %>%
+            filter(year == "2020")
+
+gg_5_4 <- ggplot(top_five, aes(x = date, y = cases_avg_per_100k)) +
+          geom_line() +
+          labs(title = "First 5 States to Experience COVID in a Substantial Way (2020)",
+                   x = "Date",
+                   y = "Cases on Average per 100K") +
+          facet_wrap(~ state) +
+          theme_bw()
+
+gg_5_4
+```
