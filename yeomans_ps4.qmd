@@ -48,7 +48,7 @@ year_2014 <- nzge %>%
             mutate(proportion_votes = (votes / sum(votes)) * 100) %>%
             arrange(desc(proportion_votes)) %>%
             ungroup()
-year_2014
+as.data.frame(year_2014) #converted to a data frame bc tibble only gave first 10
 ```
 
 c. Produce a nice table indicating, for each year, which party won the Candidate vote and which party won the Party vote.
@@ -65,7 +65,7 @@ who_won_what <- nzge %>%
                 ungroup()
 who_won_what
 ```
-
+For this part, I found which party won the Candidate vote and which party won the Party vote for each election year. I first grouped the data by election year, voting type, and party, then summed the total number of votes each party got After that, I determined which party had the highest total votes within each year and voting type, which gave the winning party. The reason why total votes and max votes are equal is since i used the filter where this is the case.
 
 
 ## Problem 2
